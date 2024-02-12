@@ -12,39 +12,37 @@
 
 #include "minitalk.h"
 
-void	ft_handler(int signo)
+void	ft_handler(int signal)
 {
-	static unsigned char		character;
-	static int					bit_count;
+	static int	i;
+	static int	n;
+	int			nb;
 
-	character = 0;
-	bit_count = 0;
-	if (SIGUSR1 == signo)
-		character = character | 1;
-	bit_count++;
-	if (bit_count == 8)
+	if (signal == SIGUSR1)
+		nb = 0;
+	else
+		nb = 1;
+	n = (n << 1) + nb;
+	i++;
+	if (i == 8)
 	{
-		ft_printf("%c", character);
-		bit_count = 0;
-		character = 0;
+		write(1, &n, 1);
+		i = 0;
+		n = 0;
 	}
-	character = character << 1;
 }
 
 void	ft_signal(void)
 {
 	struct sigaction	sa;
 
-	sa.sa_handler = ft_handler;
+	sa.sa_handler = &ft_handler;
 	sa.sa_flags = SA_RESTART;
-	if (sigaction(SIGUSR1, &sa, NULL) == -1 
-		|| sigaction(SIGUSR2, &sa, NULL) == -1)
-	{
-		ft_printf("Błąd ustawiania obsługi sygnału");
-		exit(EXIT_FAILURE);
-	}
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGUSR2, &sa, NULL);
+	write(1, "\n", 1);
 	while (1)
-		pause();
+		usleep(WAIT_TIME);
 }
 
 int	main(void)
