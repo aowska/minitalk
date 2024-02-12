@@ -11,22 +11,25 @@
 /* ************************************************************************** */
 
 #include "minitalk.h"
+#include <unistd.h>
+#include <signal.h>
+#include <sys/types.h>
+
+#include "minitalk.h"
 
 void	ft_send_bit(pid_t pid, int bit)
 {
 	int	signal;
 
-	ft_printf("read bit %d\n", bit);
 	if (bit == 1)
-		kill(pid, SIGUSR2);
-	else if (bit == 0)
-		kill(pid, SIGUSR2);
+		signal = SIGUSR1;
 	else
+		signal = SIGUSR2;
+	if (kill(pid, signal) == -1)
 	{
 		ft_printf("ERROR: SIGNAL COULD NOT BE SENT");
 		exit(EXIT_FAILURE);
 	}
-	usleep(WAIT_TIME);
 }
 
 void	ft_send_char(pid_t pid, unsigned char c)
@@ -44,29 +47,25 @@ void	ft_send_char(pid_t pid, unsigned char c)
 
 void	ft_send_str(pid_t pid, const char *str)
 {
-	ft_printf("read the string %c\n", *str);
 	while (*str)
-	{
 		ft_send_char(pid, *str++);
-	}
 	ft_send_char(pid, '\n');
 	ft_send_char(pid, '\0');
 }
 
 int	main(int argc, char **argv)
 {
-	pid_t	pid;
+	int	pid;
 
 	if (argc != 3)
 	{
-		ft_printf("Program should have 2 arguments given\n");
+		ft_printf("PROGRAM SHOULD HAVE 2 ARG!!\n");
 		exit(EXIT_FAILURE);
 	}
 	pid = ft_atoi(argv[1]);
-	ft_printf("checked PID, str= %s\n", argv[2]);
 	if (pid <= 0)
 	{
-		ft_printf("Not valid PID: %s\n", argv[1]);
+		ft_printf("PID IS NOT VALID: %s\n", argv[1]);
 		exit(EXIT_FAILURE);
 	}
 	ft_send_str(pid, argv[2]);

@@ -11,24 +11,26 @@
 /* ************************************************************************** */
 
 #include "minitalk.h"
+#include <bits/sigaction.h>
+#include <asm-generic/signal-defs.h>
 
-void	ft_handler(int signal)
+#include "minitalk.h"
+#include <sys/types.h>
+
+void	ft_handler(int signo)
 {
-	static int	i;
-	static int	n;
-	int			nb;
+	static unsigned char		character = 0;
+	static int					bit_count = 0;
 
-	if (signal == SIGUSR1)
-		nb = 0;
-	else
-		nb = 1;
-	n = (n << 1) + nb;
-	i++;
-	if (i == 8)
+	character = character << 1;
+	if (signo == SIGUSR1)
+		character = character | 1;
+	bit_count++;
+	if (bit_count == 8)
 	{
-		write(1, &n, 1);
-		i = 0;
-		n = 0;
+		ft_printf("%c", character);
+		bit_count = 0;
+		character = 0;
 	}
 }
 
@@ -36,18 +38,21 @@ void	ft_signal(void)
 {
 	struct sigaction	sa;
 
-	sa.sa_handler = &ft_handler;
+	sa.sa_handler = ft_handler;
 	sa.sa_flags = SA_RESTART;
-	sigaction(SIGUSR1, &sa, NULL);
-	sigaction(SIGUSR2, &sa, NULL);
-	write(1, "\n", 1);
+	if (sigaction(SIGUSR1, &sa, NULL) == -1 
+		|| sigaction(SIGUSR2, &sa, NULL) == -1)
+	{
+		ft_printf("ERROR: FAILD SIGNAL TO HENDLER\n", 2);
+		exit(EXIT_FAILURE);
+	}
 	while (1)
-		usleep(WAIT_TIME);
+		pause();
 }
 
 int	main(void)
 {
-	ft_printf("PID serwera: %d\n", getpid());
+	ft_printf("Server PID: %d\n", getpid());
 	ft_signal();
 	return (0);
 }
